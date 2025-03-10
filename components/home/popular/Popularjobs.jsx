@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useRouter } from "expo-router";
+
 import {
   View,
   Text,
@@ -6,23 +8,33 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+
 import styles from "./popularjobs.style";
 import { COLORS, SIZES } from "../../../constants";
-import PopularJobsCard from "../../common/cards/popular/PopularJobCard";
-import { useFetch } from "../../../hook/useFetch";
+import PopularJobCard from "../../common/cards/popular/PopularJobCard";
+import useFetch from "../../../hook/useFetch";
 
 const Popularjobs = () => {
   const router = useRouter();
-  const isLoading = false;
-  const error = false;
+
+  const { data, isLoading, error } = useFetch("search", {
+    query: "React developer",
+    num_pages: "1",
+  });
+
+  const [selectedJob, setSelectedJob] = useState();
+
+  const handleCardPress = (item) => {
+    router.push(`/job-details/${item.job_id}`);
+    setSelectedJob(item.job_id);
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Popular Jobs</Text>
+        <Text style={styles.headerTitle}>Popular jobs</Text>
         <TouchableOpacity>
-          <Text style={styles.headerBtn}>Show All</Text>
+          <Text style={styles.headerBtn}>Show all</Text>
         </TouchableOpacity>
       </View>
 
@@ -32,11 +44,18 @@ const Popularjobs = () => {
         ) : error ? (
           <Text>Something went wrong</Text>
         ) : (
+          // Render the list of popular jobs using FlatList
           <FlatList
-            data={[1, 2, 3, 4, 5]}
-            renderItem={({ item }) => <PopularJobsCard item={item} />}
-            keyExtractor={(item) => item?.job_id}
-            contentContainerStyle={{ columnGap: SIZES.small }}
+            data={data} // Job data from API
+            renderItem={({ item }) => (
+              <PopularJobCard
+                item={item} // Passing job item data to the card component
+                selectedJob={selectedJob} // Passing selected job ID
+                handleCardPress={handleCardPress} // Function to handle card press
+              />
+            )}
+            keyExtractor={(item) => item.job_id} // Unique key for each job
+            contentContainerStyle={{ columnGap: SIZES.medium }}
             horizontal
           />
         )}
